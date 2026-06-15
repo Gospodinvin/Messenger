@@ -1,46 +1,42 @@
 name: Build Android APK
 on:
-  workflow_dispatch: # Ручной запуск
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # 1. Получаем код
       - uses: actions/checkout@v4
 
-      # 2. Устанавливаем Java
-      - uses: actions/setup-java@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 3. Устанавливаем Node.js
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '18'
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-      # 4. Устанавливаем зависимости проекта (!!! Обязательно !!!)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'   # ← ИСПРАВЛЕНО: было 18, стало 20
+
       - name: Install dependencies
         run: npm install
 
-      # 5. Официальный action Expo. Он всё сделает сам.
-      - uses: expo/expo-github-action@v8
-        with:
-          expo-version: 'latest'
-          eas-version: 'latest'
-          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Install Expo and EAS globally
+        run: npm install -g expo-cli eas-cli
 
-      # 6. Сборка APK (можно использовать EAS или expo prebuild)
-      - name: Build APK with EAS
+      - name: Build APK
         run: |
-          eas build -p android --profile preview --local --output ./app.apk
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }} # Токен нужен для EAS
+          npx expo prebuild --platform android --clean
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
-      # 7. Загружаем артефакт
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: my-app
-          path: ./app.apk
+          name: app-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
