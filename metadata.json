@@ -1,0 +1,6 @@
+{
+  "name": "TeamMate Pro",
+  "description": "Full-featured cross-platform React Native + Expo team messenger, VoIP call manager, local secure data storage, local AI file parser & modifier, and cooperative task assistant.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

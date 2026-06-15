@@ -1,11 +1,102 @@
-<div align="center">
+# TeamMate Pro (React Native + Expo SDK 52) 📱🤖
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Кроссплатформенное мобильное приложение (iOS и Android) для защищенной командной работы, P2P WebRTC звонков, кооперативного ведения задач и умного встроенного нативного ИИ-ассистента на базе **ExecuTorch (TinyLlama 1.1B)**.
 
-  <h1>Built with AI Studio</h2>
+Приложение работает **полностью офлайн** (сообщения, файлы, задачи шифруются локально на устройстве с помощью SQLCipher) с возможностью опциональной синхронизации через бэкенд на базе Supabase.
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+---
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+## 🛠️ Архитектурный Стек и Библиотеки
 
-</div>
+1. **Фреймворк**: React Native 0.76+ и Expo SDK 52+ с поддержкой New Architecture по умолчанию (Hermes JS Engine).
+2. **Безопасность**: `expo-sqlite` + `expo-sqlite-sqlcipher` (AES-256 шифрование локального файла базы данных), встроенная биометрия (Face ID / Touch ID) через `expo-local-authentication`.
+3. **P2P Звонки**: `react-native-webrtc` для видео и аудио потоков, `expo-callkit-telecom` для интеграции с нативным системным интерфейсом звонков (iOS CallKit / Android Telecom Manager).
+4. **Офлайн ИИ-Ассистент**: 
+   - `react-native-executorch` для запуска компактных нейросетей типа **TinyLlama 1.1B** или **Gemma 2B** прямо на процессоре/NPU телефона (минимум iOS 17 / Android 13).
+   - Векторная база знаний: `expo-sqlite` с расширением для семантического поиска.
+   - Парсинг документов: `xlsx` (SheetJS) для таблиц Excel, `mammoth.js` замена плейсхолдеров для DOCX, `pdf-lib` для заполнения полей и генерации PDF.
+   - Локальный OCR текста с фото: `react-native-tesseract-ocr` или ML Kit Text Recognition.
+
+---
+
+## 🚀 Быстрый запуск и настройка зависимостей
+
+### Скрипт автоматической настройки
+Для macOS, Linux или Git Bash (Windows) мы прикрепили скрипт автоматической установки, который поставит нужные CLI, установит npm-зависимости и подготовит CocoaPods:
+```bash
+chmod +x setup.sh
+./setup.sh
+```
+
+### Ручная установка по шагам:
+1. **Убедитесь, что установлен Node.js** (v18.0.0 или новее).
+2. **Установите глобальные CLI**:
+   ```bash
+   npm install -g eas-cli expo-cli
+   ```
+3. **Установите JS зависимости**:
+   ```bash
+   npm install
+   ```
+4. **Сгенерируйте нативные каталоги (iOS/Android) через Prebuild**:
+   ```bash
+   npx expo prebuild
+   ```
+5. **Запустите сервер разработки**:
+   ```bash
+   npx expo start
+   ```
+
+---
+
+## 📞 Настройка Сигнального Сервера Звонков
+
+WebRTC требует обмена SDP-офферами и ICE-кандидатами для P2P соединения. Вы можете подключить сигнальный сервер двумя бесплатными способами:
+
+### Вариант 1. Бесплатный NodeJS-сервер на Render Free Tier
+Создайте простой репозиторий с NodeJS WebSocket сервером и разверните его на Render:
+```javascript
+// server.js
+const io = require("socket.io")(process.env.PORT || 3000, { cors: { origin: "*" } });
+io.on("connection", (socket) => {
+  socket.on("join-room", (roomId) => {
+    socket.join(roomId);
+  });
+  socket.on("signal", (data) => {
+    socket.to(data.roomId).emit("signal", data);
+  });
+});
+```
+Замените переменную `SIGNAL_SERVER_URL` на url вашего приложения на Render (например, `https://teammate-signal.onrender.com`).
+
+### Вариант 2. Локальный Сигналинг через Firebase Realtime Database
+Бесплатно до 1 ГБ трафика. Клиенты подписываются на путь базы данных `/calls/{roomId}` и пишут туда SDP JSON-объекты. Метод автономен и не требует отдельного хостинга для сервера WebSocket.
+
+---
+
+## 🏗️ Сборка Продакшн-Версии (EAS Build)
+
+Для сборки с нативными библиотеками (например, `react-native-webrtc`, `sqlcipher`), обычный симулятор Expo Go не подойдёт, вам необходимо собрать **Development Build** или релизный **standalone-пакет** (.APK или .IPA).
+
+Убедитесь, что вошли в аккаунт Expo (`eas login`), затем выполните:
+
+### Сборка под Android (Релизный APK)
+Конфигурация прописана в `eas.json`:
+```bash
+eas build --platform android --profile production
+```
+*Для тестирования без Google Play Console можно использовать профиль `preview` для получения готового APK на устройство напрямую.*
+
+### Сборка под iOS (IPA)
+Требуется платный аккаунт разработчика Apple (Apple Developer Program):
+```bash
+eas build --platform ios --profile production
+```
+
+---
+
+## ⚠️ Ограничения нативного редактирования документов
+
+Важная информация для использования в README и пользовательских мануалах:
+* **Сложное форматирование**: При локальном редактировании файлов DOCX и XLSX через JS-библиотеки на устройстве, сложные встроенные элементы (диаграммы, векторные графики, связанные сноски) могут быть отброшены или заменены плоским текстом.
+* **Генерация PDF**: Прямое редактирование готовых PDF на телефоне возможно только для заполнения электронных полей ввода (form fields) или наложения текста поверх координат. Для изменения структуры страниц или перекомпоновки абзацев ИИ-ассистент использует генерацию нового документа на основе измененного TXT шаблона.
