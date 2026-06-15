@@ -17,24 +17,41 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup Node.js
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
-
-      - name: Install Expo and EAS
-        run: npm install expo eas-cli
-
-      - name: Build APK with EAS
         run: |
-          npx expo prebuild --clean --non-interactive || true
-          npx eas-cli build -p android --profile preview --local --output ./app.apk
+          npm install
+          npm install expo eas-cli
 
-      - name: Upload APK
+      - name: Create eas.json if missing
+        run: |
+          if [ ! -f eas.json ]; then
+            echo '{"build":{"preview":{"android":{"buildType":"apk"}}}}' > eas.json
+            echo "Created eas.json"
+          else
+            echo "eas.json already exists"
+          fi
+
+      - name: Prebuild (verbose)
+        run: |
+          npx expo prebuild --platform android --clean --non-interactive --verbose
+          echo "Prebuild finished with exit code $?"
+
+      - name: Build APK with Gradle (fallback)
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace --info
+
+      - name: Upload APK if exists
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: ./app.apk
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            ./app.apk
+          if-no-files-found: warn
