@@ -30,7 +30,7 @@ jobs:
       - name: Prebuild (non-interactive)
         run: |
           export CI=1
-          npx expo prebuild --platform android --clean
+          npx expo prebuild --platform android --clean --yes
 
       - name: Build APK with Gradle
         run: |
