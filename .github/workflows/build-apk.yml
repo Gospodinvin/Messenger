@@ -17,7 +17,12 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup Node.js 20
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c   # именно эта версия соответствует 27.1.12297006
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -27,7 +32,7 @@ jobs:
           npm install
           npm install expo
 
-      - name: Prebuild (non-interactive)
+      - name: Prebuild
         run: |
           export CI=1
           npx expo prebuild --platform android --clean --no-install
