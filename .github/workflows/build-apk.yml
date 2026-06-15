@@ -25,33 +25,21 @@ jobs:
       - name: Install dependencies
         run: |
           npm install
-          npm install expo eas-cli
+          npm install expo
 
-      - name: Create eas.json if missing
+      - name: Prebuild (non-interactive)
         run: |
-          if [ ! -f eas.json ]; then
-            echo '{"build":{"preview":{"android":{"buildType":"apk"}}}}' > eas.json
-            echo "Created eas.json"
-          else
-            echo "eas.json already exists"
-          fi
+          export CI=1
+          npx expo prebuild --platform android --clean
 
-      - name: Prebuild (verbose)
-        run: |
-          npx expo prebuild --platform android --clean --non-interactive --verbose
-          echo "Prebuild finished with exit code $?"
-
-      - name: Build APK with Gradle (fallback)
+      - name: Build APK with Gradle
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace --info
+          ./gradlew assembleDebug
 
-      - name: Upload APK if exists
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: |
-            android/app/build/outputs/apk/debug/app-debug.apk
-            ./app.apk
-          if-no-files-found: warn
+          path: android/app/build/outputs/apk/debug/app-debug.apk
