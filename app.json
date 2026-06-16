@@ -1,33 +1,55 @@
 {
   "expo": {
     "name": "TeamMate Pro",
-    "slug": "react-example",
+    "slug": "teammate-pro",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0a0a0a"
     },
-    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.teammate.pro",
+      "infoPlist": {
+        "NSCameraUsageDescription": "TeamMate Pro использует камеру для безопасных видеозвонков через WebRTC и сканирования документов (OCR).",
+        "NSMicrophoneUsageDescription": "TeamMate Pro использует микрофон для голосовой связи высокой четкости через WebRTC.",
+        "NSFaceIDUsageDescription": "TeamMate Pro требует доступ к Face ID для локального шифрования и авторизации в базе данных SQLCipher."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0a0a0a"
       },
-      "package": "com.anonymous.reactexample"
+      "package": "com.teammate.pro",
+      "versionCode": 1,
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS",
+        "ACCESS_NETWORK_STATE",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Разрешить TeamMate Pro осуществлять вход с помощью Face ID для разблокировки SQLCipher."
+        }
+      ]
+    ],
     "extra": {
       "eas": {
-        "projectId": "3f193cd2-aae2-46cb-91bc-cc64aa889028"
+        "projectId": "d20b717e-247c-4f81-a347-b0aabadd86fd"
       }
     }
   }

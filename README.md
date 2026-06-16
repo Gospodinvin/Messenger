@@ -1,4 +1,4 @@
-# TeamMate Pro (React Native + Expo SDK 52) 📱🤖 
+# TeamMate Pro (React Native + Expo SDK 52) 📱🤖
 
 Кроссплатформенное мобильное приложение (iOS и Android) для защищенной командной работы, P2P WebRTC звонков, кооперативного ведения задач и умного встроенного нативного ИИ-ассистента на базе **ExecuTorch (TinyLlama 1.1B)**.
 
