@@ -46,11 +46,6 @@
           "faceIDPermission": "Разрешить TeamMate Pro осуществлять вход с помощью Face ID для разблокировки SQLCipher."
         }
       ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "d20b717e-247c-4f81-a347-b0aabadd86fd"
-      }
-    }
+    ]
   }
 }
