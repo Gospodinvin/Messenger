@@ -202,10 +202,12 @@ export const useTeamMateStore = create<TeamMateState>((set, get) => ({
       };
     }
 
+    const current_user = get().currentUser;
+
     const newMessage: Message = {
       id: "msg-" + Date.now(),
-      senderId: CURRENT_USER.id,
-      senderName: CURRENT_USER.name,
+      senderId: current_user.id,
+      senderName: current_user.name,
       text,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       attachments,
@@ -224,10 +226,12 @@ export const useTeamMateStore = create<TeamMateState>((set, get) => ({
       })
     }));
 
-    // If it's the specific design screen, simulate responses after a delay to show live chatbot interaction
-    if (chatId === "chat-2" && text.toLowerCase().includes("v")) {
-      // simulated delay response from AI
-    }
+    // Post to back-end sync API
+    fetch("/api/sync/message", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chatId, message: newMessage })
+    }).catch(e => console.error("Sync message status: offline", e));
   },
 
   acceptSuggestedTask: (chatId, messageId) => {
@@ -271,6 +275,13 @@ export const useTeamMateStore = create<TeamMateState>((set, get) => ({
         return c;
       })
     }));
+
+    // Post to back-end sync API
+    fetch("/api/sync/task/accept-suggested", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chatId, messageId, task: newTask })
+    }).catch(e => console.error("Sync accept task error", e));
   },
 
   createTask: (task) => {
@@ -281,6 +292,13 @@ export const useTeamMateStore = create<TeamMateState>((set, get) => ({
     set((state) => ({
       tasks: [...state.tasks, newTask]
     }));
+
+    // Post to server
+    fetch("/api/sync/task/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ task: newTask })
+    }).catch(e => console.error("Sync task create error", e));
   },
 
   toggleTaskStatus: (taskId) => {
@@ -291,12 +309,26 @@ export const useTeamMateStore = create<TeamMateState>((set, get) => ({
           : task
       )
     }));
+
+    // Post to server
+    fetch("/api/sync/task/toggle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taskId })
+    }).catch(e => console.error("Sync task toggle error", e));
   },
 
   deleteTask: (taskId) => {
     set((state) => ({
       tasks: state.tasks.filter((task) => task.id !== taskId)
     }));
+
+    // Post to server
+    fetch("/api/sync/task/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taskId })
+    }).catch(e => console.error("Sync task delete error", e));
   },
 
   startCall: (partner, isVideo) => {
@@ -435,21 +467,39 @@ export const useTeamMateStore = create<TeamMateState>((set, get) => ({
     set((state) => ({
       documents: [doc, ...state.documents]
     }));
+
+    // Post to server
+    fetch("/api/sync/document/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ doc })
+    }).catch(e => console.error("Sync add doc error", e));
   },
 
   updateDocumentContent: (docId, newContent, makeBackup = true) => {
+    const targetDoc = get().documents.find(d => d.id === docId);
+    if (!targetDoc) return;
+    const backupContent = makeBackup ? (targetDoc.originalBackupContent || targetDoc.content) : targetDoc.originalBackupContent;
+
     set((state) => ({
       documents: state.documents.map((doc) => {
         if (doc.id === docId) {
           return {
             ...doc,
             content: newContent,
-            originalBackupContent: makeBackup ? (doc.originalBackupContent || doc.content) : doc.originalBackupContent
+            originalBackupContent: backupContent
           };
         }
         return doc;
       })
     }));
+
+    // Post to server
+    fetch("/api/sync/document/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ docId, content: newContent, backupContent })
+    }).catch(e => console.error("Sync update doc error", e));
   },
 
   restoreDocumentBackup: (docId) => {
@@ -465,6 +515,13 @@ export const useTeamMateStore = create<TeamMateState>((set, get) => ({
         return doc;
       })
     }));
+
+    // Post to server
+    fetch("/api/sync/document/restore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ docId })
+    }).catch(e => console.error("Sync restore doc error", e));
   },
 
   setCurrentEditingFileId: (docId) => set({ currentEditingFileId: docId }),

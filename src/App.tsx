@@ -101,6 +101,35 @@ export default function App() {
   // Setup / simulation state
   const [fileToUpload, setFileToUpload] = useState<{ name: string; type: string; size: string; contentSnapshot: string } | null>(null);
 
+  // Real-time server synchronization loop
+  useEffect(() => {
+    let active = true;
+    const syncWithServer = async () => {
+      try {
+        const response = await fetch("/api/sync");
+        if (response.ok && active) {
+          const data = await response.json();
+          if (data.success) {
+            useTeamMateStore.setState({
+              chats: data.chats,
+              tasks: data.tasks,
+              documents: data.documents
+            });
+          }
+        }
+      } catch (err) {
+        // Fallback gracefully if backend is rebooting
+      }
+    };
+
+    syncWithServer();
+    const interval = setInterval(syncWithServer, 2500); // Poll every 2.5 seconds for instant updates
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   // Call timer effect
   useEffect(() => {
     let interval: any;
@@ -491,7 +520,33 @@ export default function App() {
                         {activeTab === "calls" && "История Звонков"}
                         {activeTab === "security" && "Безопасность"}
                       </h3>
-                      <p className="text-[10px] text-neutral-400">контекст: Offline</p>
+                      <div className="flex items-center space-x-1.5 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <select
+                          value={store.currentUser.id}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            const allUsers = [
+                              { id: "me", name: "Виктор Андреев", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&h=120&q=80", role: "Координатор проекта", status: "online" as const },
+                              ...store.users,
+                            ];
+                            const matched = allUsers.find(u => u.id === val);
+                            if (matched) {
+                              useTeamMateStore.setState({ currentUser: matched });
+                              addLog(`[Профиль] Вы переключились на роль: ${matched.name}`, "sys");
+                            }
+                          }}
+                          className="bg-transparent text-teal-400 font-medium text-[10px] uppercase tracking-wider focus:outline-none cursor-pointer border-none p-0"
+                          title="Выберите вашего пользователя для отправки сообщений от своего имени"
+                        >
+                          <option value="me" className="bg-neutral-900 text-neutral-300">Виктор (Я)</option>
+                          <option value="1" className="bg-neutral-900 text-neutral-300">Роман</option>
+                          <option value="2" className="bg-neutral-900 text-neutral-300">Анна</option>
+                          <option value="3" className="bg-neutral-900 text-neutral-300">Дмитрий</option>
+                          <option value="4" className="bg-neutral-900 text-neutral-300">Елена</option>
+                          <option value="5" className="bg-neutral-900 text-neutral-300">Алексей</option>
+                        </select>
+                      </div>
                     </div>
                     
                     <button 
@@ -1260,7 +1315,7 @@ export default function App() {
                             }}
                           ></video>
                           <div className="absolute bottom-2 right-2 w-16 h-24 bg-neutral-800 rounded-lg border border-neutral-700 overflow-hidden">
-                            <img src={CURRENT_USER.avatar} className="w-full h-full object-cover" />
+                            <img src={store.currentUser.avatar} className="w-full h-full object-cover" />
                           </div>
                         </div>
                       )}
