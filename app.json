@@ -2,6 +2,7 @@
   "expo": {
     "name": "TeamMate Pro",
     "slug": "teammate-pro",
+    "owner": "gospodinvin",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
